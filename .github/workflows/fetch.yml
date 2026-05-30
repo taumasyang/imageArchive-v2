@@ -1,0 +1,33 @@
+name: Fetch
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Configure Git
+        run: |
+          git config user.name tauyoung
+          git config user.email tauyoung@icloud.com
+      - name: Ensure Rclone and Zsh
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y rclone zsh
+      - name: Fetch
+        run: ./fetch.zsh
+      - name: Clone to Cloudflare R2
+        env:
+          RCLONE_CONFIG_R2_TYPE: s3
+          RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+          RCLONE_CONFIG_R2_ENDPOINT: https://3e1709fe95ddf6b0fbb8f8dce2737af9.r2.cloudflarestorage.com
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: rclone copy img r2:imagearchive/img --ignore-existing --no-traverse
